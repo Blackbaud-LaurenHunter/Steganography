@@ -47,11 +47,9 @@ public class Steganography {
 
     	int height = img.getHeight();
     	int width = img.getWidth();
-
     	int amountPixel = height * width;
-
-		// This prints the image height and width and a specific pixel. 
-    	System.out.println(args[1]  + "  " + height  + "  " +  width + " " + amountPixel);
+		// This prints the image height and width and amount and name. 
+    	System.out.println("picture name: " +args[1]  + "  image height: " + height  + "  image width: " +  width + " number of pixels: " + amountPixel);
     }
 }
 

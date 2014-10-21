@@ -54,44 +54,37 @@ public class ImageManipulation {
         writeToimage(position++);
         writeToimage(position++);
         writeToimage(position++);
-
-
-        bitsReceived = "";
-        System.out.println("number of pixels manipulated " + position);	
+        bitsReceived = "";	
 	}
 
 	public void decode(){
-		bitsReceived = "";
-		boolean eof = false;
-		int position= 0;
+		boolean eom = false;
+		int position = 0;
 		int index;
 		int[] pixel;
 		int[] rgb;
-		while(position < (imgHeight*imgWidth) && eof == false){
+		// go through pixels until eom == true
+		while(position < (imgHeight*imgWidth) && eom == false){
 			index = 0;
 			pixel = getPixel(position++);
 			rgb = get_RGB(pixel[0],pixel[1]);
-			// System.out.println("bits length " +bitsReceived.length());
+			// add bits to bitsReceived until = 8 or until index = 3
 			while(bitsReceived.length() < 8 && index < 3){
 				bitsReceived += Integer.toString(getBit(rgb[index++]));
 			}
-			//write to file if bitsRecieved is = 8
+			//write to file if bitsRecieved == 8
 			if(bitsReceived.length() == 8){
-				// System.out.println("bits write: " + bitsReceived);
-				if(bitsReceived.equals("00000000")){
 				//check if End of message 
-					eof = true;
-					// System.out.println("END");
+				if(bitsReceived.equals("00000000")){
+					eom = true;
 				} else {
 				//write to file
-					// System.out.println("write");
 					writeByteToFile();
 					bitsReceived = "";
 				}
 			}
 			//deal with left over bits 
 			if(index < 3){
-				// System.out.println("extra bits");
 				while(index < 3){
 					bitsReceived += Integer.toString(getBit(rgb[index++]));
 				}
@@ -128,15 +121,14 @@ public class ImageManipulation {
 	private void writeToimage(int position){
 		// going through for height ...
 		//					for width ...
-
-		//get positon -> x,y
-		System.out.println(bitsReceived);
+		// get positon -> x,y
 		int[] pos = getPixel(position); 
-		//actually writing to image
+		// go through 
 		if(pos[0] <= imgWidth && pos[1] <= imgHeight){
 			int[] rgb = get_RGB(pos[0], pos[1]);
 			int color;
 			String bit;
+			// set new rgb values to appropriate value based on bit value
 			for(int i = 0; i < rgb.length; i++){
 				color = rgb[i];
 				bit = bitsReceived.substring(i, i+1); 
@@ -149,14 +141,9 @@ public class ImageManipulation {
 						rgb[i] += 1;
 					}
 				} else System.out.println("OH snap, something went wrong"); 
-
-				// DEBUG
-				// rgb[0] = 255;
-				// rgb[1] = 255;
-				// rgb[2] = 255;
-				// write to pixel
+				// convert rgb values to a color and write to image
 				Color curr = new Color(rgb[0], rgb[1], rgb[2]);
-				color=curr.getRGB();
+				color = curr.getRGB();
 				img.setRGB(width, height,color);
 			}
 		}
