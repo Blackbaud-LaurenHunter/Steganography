@@ -7,6 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.BitSet;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.awt.Color;
 
 public class ImageManipulation {
@@ -16,6 +21,8 @@ public class ImageManipulation {
 	private int imgWidth;
 	static int height= 0;
 	static int width = -1;
+
+	private BufferedWriter fileWriter;
 
 	public ImageManipulation(BufferedImage image, int imageWidth, int imageHeight){
 		img = image;
@@ -38,16 +45,75 @@ public class ImageManipulation {
                 	writeToimage(position);
                 	position++;
                 	bitsReceived = "";
-            	}
+           		}
             }
-
         }
-        System.out.println("number of pixels manipulated " + position);
-		
+        // End of Message notification
+        bitsReceived = "000";
+        writeToimage(position++);
+        writeToimage(position++);
+        writeToimage(position++);
+        writeToimage(position++);
+
+
+        bitsReceived = "";
+        System.out.println("number of pixels manipulated " + position);	
 	}
 
 	public void decode(){
+		bitsReceived = "";
+		boolean eof = false;
+		int position= 0;
+		int index;
+		int[] pixel;
+		int[] rgb;
+		while(position < (imgHeight*imgWidth) && eof == false){
+			index = 0;
+			pixel = getPixel(position++);
+			rgb = get_RGB(pixel[0],pixel[1]);
+			// System.out.println("bits length " +bitsReceived.length());
+			while(bitsReceived.length() < 8 && index < 3){
+				bitsReceived += Integer.toString(getBit(rgb[index++]));
+			}
+			//write to file if bitsRecieved is = 8
+			if(bitsReceived.length() == 8){
+				// System.out.println("bits write: " + bitsReceived);
+				if(bitsReceived.equals("00000000")){
+				//check if End of message 
+					eof = true;
+					// System.out.println("END");
+				} else {
+				//write to file
+					// System.out.println("write");
+					writeByteToFile();
+					bitsReceived = "";
+				}
+			}
+			//deal with left over bits 
+			if(index < 3){
+				// System.out.println("extra bits");
+				while(index < 3){
+					bitsReceived += Integer.toString(getBit(rgb[index++]));
+				}
+			}
+		}
+	}
+		
+	private int getBit(int color){
+		if(color % 2 == 0)
+			return 0;
+		else return 1;
+	}
 
+	private int[] getPixel(int position){
+		int xy[] = new int[2];
+		if(width == imgWidth){
+			++height;
+			width = 0;
+		} else ++width;
+		xy[0] = width;
+		xy[1] = height;
+		return xy;
 	}
 
     private int[] get_RGB(int x, int y) {
@@ -56,7 +122,6 @@ public class ImageManipulation {
 	     rgb[0] = color.getRed();
 	     rgb[1] = color.getGreen();
 	     rgb[2] = color.getBlue();
-	     // System.out.println("rgb: " + rgb[0] + " " + rgb[1] + " " + rgb[2]);
 	     return rgb;
 	}
 
@@ -64,17 +129,12 @@ public class ImageManipulation {
 		// going through for height ...
 		//					for width ...
 
-		//get positon -> may break this up into another method
-		if(position > -1){
-			if(width == imgWidth){
-				++height;
-				width = 0;
-			} else ++width;
-		}
+		//get positon -> x,y
+		System.out.println(bitsReceived);
+		int[] pos = getPixel(position); 
 		//actually writing to image
-		// System.out.println("Hegith " +height + " width " + width);
-		if(width <= imgWidth && height <= imgHeight){
-			int[] rgb = get_RGB(width, height);
+		if(pos[0] <= imgWidth && pos[1] <= imgHeight){
+			int[] rgb = get_RGB(pos[0], pos[1]);
 			int color;
 			String bit;
 			for(int i = 0; i < rgb.length; i++){
@@ -101,5 +161,31 @@ public class ImageManipulation {
 			}
 		}
 	}
+
+
+	public void writeByteToFile(){
+        try {
+            short a = Short.parseShort(bitsReceived, 2);
+            ByteBuffer bytes = ByteBuffer.allocate(2).putShort(a);
+
+            byte[] array = bytes.array();
+            fileWriter.write(new String(array, "UTF-8"));
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void openFile(String filename) throws IOException{
+        FileWriter fstream = new FileWriter(filename);
+        fileWriter = new BufferedWriter(fstream);
+    }
+
+    public void closeFile(){
+        try {
+            fileWriter.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
 
 }

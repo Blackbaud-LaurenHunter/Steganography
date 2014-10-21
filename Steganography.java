@@ -17,27 +17,32 @@ public class Steganography {
 	public static void main (String []args) {
 		//Steganography -E image.png my-message - "Encode"
 		//Steganography -D image-steg.png my-message-out - "Decode"
-		ImageManipulation image_message;
+		ImageManipulation message;
 		BufferedImage img = null;
 
 		Path path = Paths.get(args[2]);
 		String new_image = args[1].replaceAll("\\..*","");
+
         try {	
             img = ImageIO.read(new File(args[1]));
-            image_message = new ImageManipulation(img, img.getWidth(), img.getHeight());
+            message = new ImageManipulation(img, img.getWidth(), img.getHeight());
 			if(args[0].equals("-E")){
 				byte[] bytes = Files.readAllBytes(path);
             	ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
-            	image_message.encode(byteStream);
+            	message.encode(byteStream);
             	File outputfile = new File(new_image + "-steg.png");
         		ImageIO.write(img, "png", outputfile);
 
 			} else if(args[0].equals("-D")){
-				image_message.decode();
+				message.openFile(args[2]);
+				message.decode();
+				message.closeFile();
 			} else System.out.println("Wrong arguments");
 		
         } catch (IOException e) {
         	e.printStackTrace();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
         }
 
     	int height = img.getHeight();
