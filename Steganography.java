@@ -1,5 +1,3 @@
-import sun.misc.IOUtils;
-
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.BufferedReader;
@@ -27,6 +25,7 @@ public class Steganography {
             img = ImageIO.read(new File(args[1]));
             message = new ImageManipulation(img, img.getWidth(), img.getHeight());
 			if(args[0].equals("-E")){
+                // ENCODING
 				byte[] bytes = Files.readAllBytes(path);
             	ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
             	message.encode(byteStream);
@@ -34,6 +33,7 @@ public class Steganography {
         		ImageIO.write(img, "png", outputfile);
 
 			} else if(args[0].equals("-D")){
+                // DECODING
 				message.openFile(args[2]);
 				message.decode();
 				message.closeFile();

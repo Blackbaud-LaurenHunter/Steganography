@@ -35,25 +35,23 @@ public class ImageManipulation {
 		//If the bit you want to store is 0, make the corresponding byte even; 
 		//if the bit is 1, make the byte odd;
 		String currentByte;
-		int position=0;
         while (inputStream.available() > 0) {
             currentByte = String.format("%8s", Integer.toBinaryString(inputStream.read())).replace(' ', '0');
             for (int i = 0; i < currentByte.length(); i++) {
                 String bitToSend = currentByte.substring(i, i+1);
                 bitsReceived += bitToSend;
             	if (bitsReceived.length() == 3){
-                	writeToimage(position);
-                	position++;
+                	writeToimage();
                 	bitsReceived = "";
            		}
             }
         }
         // End of Message notification
         bitsReceived = "000";
-        writeToimage(position++);
-        writeToimage(position++);
-        writeToimage(position++);
-        writeToimage(position++);
+        writeToimage();
+        writeToimage();
+        writeToimage();
+        writeToimage();
         bitsReceived = "";	
 	}
 
@@ -61,14 +59,14 @@ public class ImageManipulation {
 		boolean eom = false;
 		int position = 0;
 		int index;
-		int[] pixel;
 		int[] rgb;
 		// go through pixels until eom == true
 		while(position < (imgHeight*imgWidth) && eom == false){
 			index = 0;
-			pixel = getPixel(position++);
-			rgb = get_RGB(pixel[0],pixel[1]);
-			// add bits to bitsReceived until = 8 or until index = 3
+			getPixel();
+			position++;
+			rgb = get_RGB(width,height);
+			// add bits to bitsReceived until = 8 or until index of RGB values = 3
 			while(bitsReceived.length() < 8 && index < 3){
 				bitsReceived += Integer.toString(getBit(rgb[index++]));
 			}
@@ -98,15 +96,11 @@ public class ImageManipulation {
 		else return 1;
 	}
 
-	private int[] getPixel(int position){
-		int xy[] = new int[2];
+	private void getPixel(){
 		if(width == imgWidth){
 			++height;
 			width = 0;
 		} else ++width;
-		xy[0] = width;
-		xy[1] = height;
-		return xy;
 	}
 
     private int[] get_RGB(int x, int y) {
@@ -118,14 +112,13 @@ public class ImageManipulation {
 	     return rgb;
 	}
 
-	private void writeToimage(int position){
+	private void writeToimage(){
 		// going through for height ...
 		//					for width ...
 		// get positon -> x,y
-		int[] pos = getPixel(position); 
-		// go through 
-		if(pos[0] <= imgWidth && pos[1] <= imgHeight){
-			int[] rgb = get_RGB(pos[0], pos[1]);
+		getPixel(); 
+		if(width <= imgWidth && height <= imgHeight){
+			int[] rgb = get_RGB(width, height);
 			int color;
 			String bit;
 			// set new rgb values to appropriate value based on bit value
@@ -146,7 +139,7 @@ public class ImageManipulation {
 				color = curr.getRGB();
 				img.setRGB(width, height,color);
 			}
-		}
+		} else System.out.println("error: message too long");
 	}
 
 
